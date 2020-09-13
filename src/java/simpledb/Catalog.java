@@ -18,12 +18,22 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Catalog {
 
+    private ArrayList<DbFile> files;
+    private ArrayList<Integer> fileIds;
+    private ArrayList<String> filenames;
+    private ArrayList<String> fileKeys;
+
     /**
      * Constructor.
      * Creates a new, empty catalog.
      */
     public Catalog() {
         // some code goes here
+
+        this.files = new ArrayList<DbFile>();
+        this.fileIds = new ArrayList<Integer>();
+        this.filenames = new ArrayList<String>();
+        this.fileKeys = new ArrayList<String>();
     }
 
     /**
@@ -37,6 +47,35 @@ public class Catalog {
      */
     public void addTable(DbFile file, String name, String pkeyField) {
         // some code goes here
+
+        // Check if file already exists
+        if (this.fileIds.contains(file.getId())) {
+
+            // Get index of pre-existing file
+            int newIndex = this.fileIds.indexOf(file.getId());
+
+            // Update file information
+            this.files.set(newIndex, file);
+            this.filenames.set(newIndex, name);
+            this.fileKeys.set(newIndex, pkeyField);
+
+        } else if (this.filenames.contains(name)) {
+
+            // If file name already exists, then use the last table added as the table for a given name
+            int index = this.filenames.size() - 1;
+
+            // Update remaining fields (but not filenames)
+            this.files.set(index, file);
+            this.fileKeys.set(index, pkeyField);
+            this.fileIds.set(index, file.getId());
+
+        } else {
+            this.files.add(file);
+            this.fileIds.add(file.getId());
+            this.filenames.add(name);
+            this.fileKeys.add(pkeyField);
+        }
+
     }
 
     public void addTable(DbFile file, String name) {
@@ -59,50 +98,80 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public int getTableId(String name) throws NoSuchElementException {
-        // some code goes here
-        return 0;
+        int index = this.filenames.indexOf(name);
+
+        if (index == -1) {
+            throw new NoSuchElementException();
+        }
+        return this.fileIds.get(index);
     }
 
     /**
      * Returns the tuple descriptor (schema) of the specified table
-     * @param tableid The id of the table, as specified by the DbFile.getId()
+     * @param tableId The id of the table, as specified by the DbFile.getId()
      *     function passed to addTable
      * @throws NoSuchElementException if the table doesn't exist
      */
-    public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-        // some code goes here
-        return null;
+    public TupleDesc getTupleDesc(int tableId) throws NoSuchElementException {
+        int index = this.fileIds.indexOf(tableId);
+
+        if (index == -1) {
+            throw new NoSuchElementException();
+        }
+
+        return this.files.get(index).getTupleDesc();
+
     }
 
     /**
      * Returns the DbFile that can be used to read the contents of the
      * specified table.
-     * @param tableid The id of the table, as specified by the DbFile.getId()
+     * @param tableId The id of the table, as specified by the DbFile.getId()
      *     function passed to addTable
      */
-    public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
-        // some code goes here
-        return null;
+    public DbFile getDatabaseFile(int tableId) throws NoSuchElementException {
+        int index = this.fileIds.indexOf(tableId);
+
+        if (index == -1 ) {
+            throw new NoSuchElementException();
+        }
+
+
+        return this.files.get(index);
     }
 
-    public String getPrimaryKey(int tableid) {
+    public String getPrimaryKey(int tableId) throws NoSuchElementException {
         // some code goes here
-        return null;
+        int index = this.fileIds.indexOf(tableId);
+
+        if (index == -1) {
+            throw new NoSuchElementException();
+        }
+
+        return this.fileKeys.get(index);
     }
 
     public Iterator<Integer> tableIdIterator() {
-        // some code goes here
-        return null;
+        return this.fileIds.iterator();
     }
 
-    public String getTableName(int id) {
-        // some code goes here
-        return null;
+    public String getTableName(int id) throws NoSuchElementException {
+
+        int index = this.fileIds.indexOf(id);
+
+        if (index == -1) {
+            throw new NoSuchElementException();
+        }
+
+        return this.filenames.get(index);
     }
     
     /** Delete all tables from the catalog */
     public void clear() {
-        // some code goes here
+        this.files = new ArrayList<DbFile>();
+        this.fileIds = new ArrayList<Integer>();
+        this.filenames = new ArrayList<String>();
+        this.fileKeys = new ArrayList<String>();
     }
     
     /**

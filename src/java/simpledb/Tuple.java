@@ -115,7 +115,7 @@ public class Tuple implements Serializable {
         String tupleString = "";
 
         for(int i = 0; i < this.tupleFields.size(); i++) {
-            tupleString += this.tupleFields.get(i).toString();
+            tupleString += this.tupleFields.get(i).toString() + "\t";
         }
 
         return tupleString;
@@ -138,5 +138,9 @@ public class Tuple implements Serializable {
     public void resetTupleDesc(TupleDesc td)
     {
         // some code goes here
+
+        for (int i = 0; i < this.tupleFields.size(); i++) {
+            this.tupleFields.set(i, null);
+        }
     }
 }
