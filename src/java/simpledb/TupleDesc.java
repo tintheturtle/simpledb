@@ -289,6 +289,8 @@ public class TupleDesc implements Serializable {
 
             descriptor += this.getFieldType(i).toString() + '(' + this.getFieldName(i) + "),";
         }
+
+        System.out.println(descriptor);
         return descriptor;
     }
 }
