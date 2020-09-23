@@ -1,5 +1,6 @@
 package simpledb;
 
+import javax.xml.crypto.Data;
 import java.io.*;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,13 +27,18 @@ public class BufferPool {
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
 
+    private ConcurrentHashMap<PageId, Page> bufferPoolHashMap;
+    private int maxPages;
+
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
      * @param numPages maximum number of pages in this buffer pool.
      */
     public BufferPool(int numPages) {
-        // some code goes here
+
+        this.bufferPoolHashMap = new ConcurrentHashMap<PageId, Page>();
+        this.maxPages = numPages;
     }
     
     public static int getPageSize() {
@@ -57,7 +63,7 @@ public class BufferPool {
      * The retrieved page should be looked up in the buffer pool.  If it
      * is present, it should be returned.  If it is not present, it should
      * be added to the buffer pool and returned.  If there is insufficient
-     * space in the buffer pool, an page should be evicted and the new page
+     * space in the buffer pool, a page should be evicted and the new page
      * should be added in its place.
      *
      * @param tid the ID of the transaction requesting the page
@@ -66,8 +72,27 @@ public class BufferPool {
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+
+        Page page = this.bufferPoolHashMap.get(pid);
+
+        if (page == null) {
+
+            if (this.bufferPoolHashMap.size() == this.maxPages) {
+                throw new DbException("Maximum number of pages have been reached. LRU Eviction Policy not implemented.");
+            }
+
+            page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
+
+            this.bufferPoolHashMap.put(pid, page);
+
+            return page;
+
+        } else  {
+
+            return page;
+
+        }
+
     }
 
     /**

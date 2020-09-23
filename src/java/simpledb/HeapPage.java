@@ -1,5 +1,6 @@
 package simpledb;
 
+import javax.xml.crypto.Data;
 import java.util.*;
 import java.io.*;
 
@@ -67,7 +68,9 @@ public class HeapPage implements Page {
     */
     private int getNumTuples() {        
         // some code goes here
-        return 0;
+
+
+        return (BufferPool.getPageSize()*8) / (this.td.getSize() * 8 + 1);
 
     }
 
@@ -78,7 +81,7 @@ public class HeapPage implements Page {
     private int getHeaderSize() {        
         
         // some code goes here
-        return 0;
+        return (int) Math.ceil( (double) this.getNumTuples() / 8);
                  
     }
     
@@ -112,7 +115,10 @@ public class HeapPage implements Page {
      */
     public HeapPageId getId() {
     // some code goes here
-    throw new UnsupportedOperationException("implement this");
+
+        return this.pid;
+
+//    throw new UnsupportedOperationException("implement this");
     }
 
     /**
@@ -281,8 +287,15 @@ public class HeapPage implements Page {
      * Returns the number of empty slots on this page.
      */
     public int getNumEmptySlots() {
-        // some code goes here
-        return 0;
+
+        int emptySlots = 0;
+        for (int i = 0; i < this.numSlots; i++) {
+            if (!this.isSlotUsed(i)) {
+                emptySlots += 1;
+            }
+        }
+
+        return emptySlots;
     }
 
     /**
@@ -290,7 +303,22 @@ public class HeapPage implements Page {
      */
     public boolean isSlotUsed(int i) {
         // some code goes here
-        return false;
+
+        // Header tells whether or not it is filled
+
+        // Get the nearest number of integer bytes
+        int indexBytes = i / 8;
+
+        // Modulo since the number of slots cannot be a multiple of 8
+        int indexModulo = i % 8;
+
+        int bit = (this.header[indexBytes]) & (byte) 1 << indexModulo;
+
+        if (bit == 0) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     /**
@@ -307,7 +335,47 @@ public class HeapPage implements Page {
      */
     public Iterator<Tuple> iterator() {
         // some code goes here
-        return null;
+
+        return new HeapTupleIterator();
+
+    }
+
+    public class HeapTupleIterator implements Iterator<Tuple> {
+
+        private int index = 0;
+
+        @Override
+        public boolean hasNext() {
+
+            while(this.index < HeapPage.this.numSlots) {
+
+                if (HeapPage.this.tuples[this.index] != null) {
+                    return true;
+                }
+
+                this.index++;
+            }
+            return false;
+        }
+
+        @Override
+        public Tuple next() {
+            // Update index
+            while (this.index < HeapPage.this.numSlots) {
+
+                if (HeapPage.this.tuples[this.index] != null) {
+                    return HeapPage.this.tuples[this.index++];
+                }
+                this.index++;
+            }
+
+            return null;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 
 }

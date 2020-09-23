@@ -1,5 +1,6 @@
 package simpledb;
 
+import javax.xml.crypto.Data;
 import java.util.*;
 
 /**
@@ -11,13 +12,19 @@ public class SeqScan implements DbIterator {
 
     private static final long serialVersionUID = 1L;
 
+    private TransactionId tid;
+    private int tableId;
+    private String tableAlias;
+
+    private DbFileIterator fileIterator;
+
     /**
      * Creates a sequential scan over the specified table as a part of the
      * specified transaction.
      *
      * @param tid
      *            The transaction this scan is running as a part of.
-     * @param tableid
+     * @param tableId
      *            the table to scan.
      * @param tableAlias
      *            the alias of this table (needed by the parser); the returned
@@ -27,8 +34,14 @@ public class SeqScan implements DbIterator {
      *            are, but the resulting name can be null.fieldName,
      *            tableAlias.null, or null.null).
      */
-    public SeqScan(TransactionId tid, int tableid, String tableAlias) {
-        // some code goes here
+    public SeqScan(TransactionId tid, int tableId, String tableAlias) {
+
+        this.tid = tid;
+        this.tableId = tableId;
+        this.tableAlias = tableAlias;
+        this.fileIterator = Database.getCatalog().getDatabaseFile(this.tableId).iterator(this.tid);
+
+
     }
 
     /**
@@ -37,7 +50,7 @@ public class SeqScan implements DbIterator {
      *       be the actual name of the table in the catalog of the database
      * */
     public String getTableName() {
-        return null;
+        return Database.getCatalog().getTableName(this.tableId);
     }
 
     /**
@@ -45,8 +58,10 @@ public class SeqScan implements DbIterator {
      * */
     public String getAlias()
     {
-        // some code goes here
-        return null;
+        if (this.tableAlias == "null") {
+            return "null";
+        }
+        return this.tableAlias;
     }
 
     /**
@@ -62,7 +77,10 @@ public class SeqScan implements DbIterator {
      *            tableAlias.null, or null.null).
      */
     public void reset(int tableid, String tableAlias) {
-        // some code goes here
+
+        this.tableAlias = tableAlias;
+        this.tableId = tableid;
+
     }
 
     public SeqScan(TransactionId tid, int tableid) {
@@ -71,6 +89,14 @@ public class SeqScan implements DbIterator {
 
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
+
+        DbFile file = Database.getCatalog().getDatabaseFile(this.tableId);
+
+        this.fileIterator = file.iterator(this.tid);
+
+        this.fileIterator.open();
+
+
     }
 
     /**
@@ -85,26 +111,50 @@ public class SeqScan implements DbIterator {
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return null;
+
+        TupleDesc tds = Database.getCatalog().getTupleDesc(this.tableId);
+
+        Iterator<TupleDesc.TDItem> tdItems = tds.iterator();
+
+        Type[] typeAr = new Type[tds.numFields()];
+        String[] fieldNameAr= new String[tds.numFields()];
+
+        int index = 0;
+
+        while (tdItems.hasNext()) {
+            TupleDesc.TDItem tdItem = tdItems.next();
+
+            typeAr[index] = tdItem.fieldType;
+            fieldNameAr[index] = this.tableAlias + '.' + tdItem.fieldName;
+
+            index++;
+
+
+        }
+
+        return new TupleDesc(typeAr, fieldNameAr);
     }
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
-        // some code goes here
-        return false;
+
+        return this.fileIterator.hasNext();
     }
 
     public Tuple next() throws NoSuchElementException,
             TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+        return this.fileIterator.next();
     }
 
     public void close() {
         // some code goes here
+        this.fileIterator.close();
     }
 
     public void rewind() throws DbException, NoSuchElementException,
             TransactionAbortedException {
+
+        this.fileIterator.rewind();
         // some code goes here
     }
 }
