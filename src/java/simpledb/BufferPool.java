@@ -182,9 +182,9 @@ public class BufferPool {
         // not necessary for lab1
 
         DbFile dbFile = Database.getCatalog().getDatabaseFile(tableId);
-        HeapFile heapFile =(HeapFile) dbFile;
 
-        ArrayList<Page> dirtiedPages = heapFile.insertTuple(tid, t);
+
+        ArrayList<Page> dirtiedPages = dbFile.insertTuple(tid, t);
 
         for (Page page : dirtiedPages) {
             page.markDirty(true, tid);
@@ -257,11 +257,11 @@ public class BufferPool {
 
         Page page = this.bufferPoolHashMap.get(pid);
 
-        int tableId = ( (HeapPageId) pid).getTableId();
+        int tableId = pid.getTableId();
 
-        HeapFile hf = (HeapFile) Database.getCatalog().getDatabaseFile(tableId);
+        DbFile f = Database.getCatalog().getDatabaseFile(tableId);
 
-        hf.writePage(page);
+        f.writePage(page);
         page.markDirty(false, null);
     }
 

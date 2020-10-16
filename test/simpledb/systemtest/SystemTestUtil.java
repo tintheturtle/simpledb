@@ -120,7 +120,6 @@ public class SystemTestUtil {
         int counter = 0;
 
         iterator.open();
-        System.out.println("size: " + tuples.size());
         while (iterator.hasNext()) {
             Tuple t = iterator.next();
             ArrayList<Integer> list = tupleToList(t);
@@ -128,7 +127,6 @@ public class SystemTestUtil {
             counter++;
             Debug.log("scanned tuple: %s (%s)", t, isExpected ? "expected" : "not expected");
             if (!isExpected) {
-                System.out.println("count:" + counter);
                 Assert.fail("expected tuples does not contain: " + t);
             }
         }

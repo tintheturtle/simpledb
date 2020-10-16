@@ -195,8 +195,41 @@ public class BTreeFile implements DbFile {
 	private BTreeLeafPage findLeafPage(TransactionId tid, HashMap<PageId, Page> dirtypages, BTreePageId pid, Permissions perm,
 			Field f) 
 					throws DbException, TransactionAbortedException {
-		// some code goes here
-        return null;
+
+		switch(pid.pgcateg()) {
+			case BTreePageId.LEAF: {
+				return (BTreeLeafPage) (this.getPage(tid, dirtypages, pid, perm));
+			}
+			case BTreePageId.INTERNAL: {
+				BTreeInternalPage page = (BTreeInternalPage) (this.getPage(tid, dirtypages, pid, perm.READ_ONLY));
+				Iterator<BTreeEntry> es = page.iterator();
+
+				if (es == null || !es.hasNext()) {
+					throw new DbException("");
+				}
+				if (f == null) {
+					return findLeafPage(tid, dirtypages, es.next().getLeftChild(), perm, f);
+				}
+				BTreeEntry entry = es.next();
+
+				while (true) {
+					if (entry.getKey().compare(Op.GREATER_THAN_OR_EQ, f)) {
+						return findLeafPage(tid, dirtypages, entry.getLeftChild(), perm, f);
+					}
+					if (es.hasNext()) {
+						entry = es.next();
+					} else {
+						break;
+					}
+				}
+				return findLeafPage(tid, dirtypages, entry.getRightChild(), perm, f);
+
+			}
+			case BTreePageId.HEADER:
+			case BTreePageId.ROOT_PTR:
+			default:
+				throw new DbException("Something went wrong.");
+		}
 	}
 	
 	/**
@@ -212,7 +245,7 @@ public class BTreeFile implements DbFile {
 	 * 
 	 */
 	BTreeLeafPage findLeafPage(TransactionId tid, BTreePageId pid, Permissions perm,
-			Field f) 
+			Field f)
 					throws DbException, TransactionAbortedException {
 		return findLeafPage(tid, new HashMap<PageId, Page>(), pid, perm, f);
 	}
@@ -248,7 +281,47 @@ public class BTreeFile implements DbFile {
 		// the new entry.  getParentWithEmtpySlots() will be useful here.  Don't forget to update
 		// the sibling pointers of all the affected leaf pages.  Return the page into which a 
 		// tuple with the given key field should be inserted.
-        return null;
+
+		BTreeLeafPage newPage = (BTreeLeafPage) this.getEmptyPage(tid, dirtypages, BTreePageId.LEAF);
+		Iterator<Tuple> tuples = page.iterator();
+
+
+		int numTuples = page.getNumTuples();
+
+		for (int index = 0; index < ( numTuples / 2); index ++ ) {
+			if (!tuples.hasNext()) {
+				throw new DbException("Error, no more tuples.");
+			}
+			Tuple t = tuples.next();
+			page.deleteTuple(t);
+			newPage.insertTuple(t);
+		}
+
+		if (page.getLeftSiblingId() != null) {
+			BTreeLeafPage neighbor = (BTreeLeafPage) this.getPage(tid, dirtypages, page.getLeftSiblingId(), Permissions.READ_WRITE);
+			neighbor.setRightSiblingId(newPage.getId());
+		}
+
+		newPage.setLeftSiblingId(page.getLeftSiblingId());
+		newPage.setRightSiblingId(page.getId());
+
+		page.setLeftSiblingId(newPage.getId());
+
+		Field newField = tuples.next().getField(keyField);
+
+		BTreeEntry newEntry = new BTreeEntry(newField, newPage.getId(), page.getId());
+
+		BTreeInternalPage parent = this.getParentWithEmptySlots(tid, dirtypages, page.getParentId(), newField);
+
+		parent.insertEntry(newEntry);
+
+		this.updateParentPointers(tid, dirtypages, parent);
+
+		if (newField.compare(Op.GREATER_THAN_OR_EQ, field)) {
+			return newPage;
+		} else {
+			return page;
+		}
 		
 	}
 	
@@ -277,8 +350,48 @@ public class BTreeFile implements DbFile {
 	protected BTreeInternalPage splitInternalPage(TransactionId tid, HashMap<PageId, Page> dirtypages, 
 			BTreeInternalPage page, Field field) 
 					throws DbException, IOException, TransactionAbortedException {
-		// some code goes here
-		return null;
+
+		// Make a new page
+		BTreeInternalPage leftNewPage = (BTreeInternalPage) this.getEmptyPage(tid, dirtypages, BTreePageId.INTERNAL);
+
+		// Get entries of page
+		Iterator<BTreeEntry> entries = page.iterator();
+
+		// Split entries into a new page
+		int numEntries = page.getNumEntries() / 2;
+		int index = 0;
+		while (index < numEntries) {
+			BTreeEntry entry = entries.next();
+			page.deleteKeyAndLeftChild(entry);
+			leftNewPage.insertEntry(entry);
+			index++;
+		}
+
+		// Get next entry to reference in next page
+		BTreeEntry pushedEntry = entries.next();
+
+		Field pushedField = pushedEntry.getKey();
+
+		page.deleteKeyAndLeftChild(pushedEntry);
+
+		pushedEntry = new BTreeEntry(pushedField, leftNewPage.getId(), page.getId());
+
+		// Update all pointers
+		this.updateParentPointers(tid, dirtypages, page);
+		this.updateParentPointers(tid, dirtypages, leftNewPage);
+
+		BTreeInternalPage parent;
+		parent = this.getParentWithEmptySlots(tid, dirtypages, page.getParentId(), pushedField);
+
+		parent.insertEntry(pushedEntry);
+
+		this.updateParentPointers(tid, dirtypages, parent);
+
+		if (pushedField.compare(Op.GREATER_THAN_OR_EQ, field)) {
+			return leftNewPage;
+		} else {
+			return page;
+		}
 	}
 	
 	/**
