@@ -40,7 +40,6 @@ public class HeapFile implements DbFile {
      * @return the File backing this HeapFile on disk.
      */
     public File getFile() {
-        // some code goes here
         return this.file;
     }
 
@@ -96,16 +95,17 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public void writePage(Page page) throws IOException {
-        // some code goes here
         // not necessary for lab1
+        RandomAccessFile raf = new RandomAccessFile(this.file, "rw");
+        raf.seek(page.getId().pageNumber() * BufferPool.getPageSize());
+        byte[] data = page.getPageData();
+        raf.write(data);
     }
 
     /**
      * Returns the number of pages in this HeapFile.
      */
     public int numPages() {
-        // some code goes here
-
         int fileNumPages = (int) ( file.length() / BufferPool.getPageSize());
 
         return fileNumPages;

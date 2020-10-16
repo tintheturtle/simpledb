@@ -3,6 +3,7 @@ package simpledb;
 import javax.xml.crypto.Data;
 import java.io.*;
 
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -76,23 +77,15 @@ public class BufferPool {
         Page page = this.bufferPoolHashMap.get(pid);
 
         if (page == null) {
-
             if (this.bufferPoolHashMap.size() == this.maxPages) {
                 throw new DbException("Maximum number of pages have been reached. LRU Eviction Policy not implemented.");
             }
-
             page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
-
             this.bufferPoolHashMap.put(pid, page);
-
             return page;
-
         } else  {
-
             return page;
-
         }
-
     }
 
     /**
@@ -158,6 +151,17 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
+
+        DbFile dbFile = Database.getCatalog().getDatabaseFile(tableId);
+        HeapFile heapFile =(HeapFile) dbFile;
+
+        ArrayList<Page> dirtiedPages = heapFile.insertTuple(tid, t);
+
+        for (Page page : dirtiedPages) {
+            page.markDirty(true, tid);
+            bufferPoolHashMap.put(page.getId(), page);
+        }
+
     }
 
     /**
@@ -177,6 +181,17 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
+
+        int tableId = t.getRecordId().getPageId().getTableId();
+
+        DbFile dbFile = Database.getCatalog().getDatabaseFile(tableId);
+        HeapFile heapFile =(HeapFile) dbFile;
+
+        ArrayList<Page> dirtiedPages = heapFile.deleteTuple(tid, t);
+
+        for (Page page : dirtiedPages) {
+            page.markDirty(true, tid);
+        }
     }
 
     /**
@@ -207,9 +222,18 @@ public class BufferPool {
      * Flushes a certain page to disk
      * @param pid an ID indicating the page to flush
      */
-    private synchronized  void flushPage(PageId pid) throws IOException {
+    private synchronized void flushPage(PageId pid) throws IOException {
         // some code goes here
         // not necessary for lab1
+
+        Page page = this.bufferPoolHashMap.get(pid);
+
+        int tableId = ( (HeapPageId) pid).getTableId();
+
+        HeapFile hf = (HeapFile) Database.getCatalog().getDatabaseFile(tableId);
+
+        hf.writePage(page);
+        page.markDirty(false, null);
     }
 
     /** Write all pages of the specified transaction to disk.
