@@ -198,26 +198,30 @@ public class BTreeFile implements DbFile {
 
 		switch(pid.pgcateg()) {
 			case BTreePageId.LEAF: {
+				// Base case
 				return (BTreeLeafPage) (this.getPage(tid, dirtypages, pid, perm));
 			}
 			case BTreePageId.INTERNAL: {
+				// Get page
 				BTreeInternalPage page = (BTreeInternalPage) (this.getPage(tid, dirtypages, pid, perm.READ_ONLY));
-				Iterator<BTreeEntry> es = page.iterator();
+				// Set up iterator of pages
+				Iterator<BTreeEntry> pages = page.iterator();
 
-				if (es == null || !es.hasNext()) {
+				if (pages == null || !pages.hasNext()) {
 					throw new DbException("");
 				}
 				if (f == null) {
-					return findLeafPage(tid, dirtypages, es.next().getLeftChild(), perm, f);
+					return findLeafPage(tid, dirtypages, pages.next().getLeftChild(), perm, f);
 				}
-				BTreeEntry entry = es.next();
+				BTreeEntry entry = pages.next();
 
+				// Iterate through the entries until we find an entry containing f
 				while (true) {
 					if (entry.getKey().compare(Op.GREATER_THAN_OR_EQ, f)) {
 						return findLeafPage(tid, dirtypages, entry.getLeftChild(), perm, f);
 					}
-					if (es.hasNext()) {
-						entry = es.next();
+					if (pages.hasNext()) {
+						entry = pages.next();
 					} else {
 						break;
 					}
@@ -225,8 +229,6 @@ public class BTreeFile implements DbFile {
 				return findLeafPage(tid, dirtypages, entry.getRightChild(), perm, f);
 
 			}
-			case BTreePageId.HEADER:
-			case BTreePageId.ROOT_PTR:
 			default:
 				throw new DbException("Something went wrong.");
 		}

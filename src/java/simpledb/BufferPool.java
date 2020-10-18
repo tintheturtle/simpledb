@@ -232,6 +232,9 @@ public class BufferPool {
         // some code goes here
         // not necessary for lab1
 
+        for (PageId key : this.bufferPoolHashMap.keySet()) {
+            this.flushPage(key);
+        }
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -245,6 +248,7 @@ public class BufferPool {
     public synchronized void discardPage(PageId pid) {
         // some code goes here
         // not necessary for lab1
+        this.bufferPoolHashMap.remove(pid);
     }
 
     /**
