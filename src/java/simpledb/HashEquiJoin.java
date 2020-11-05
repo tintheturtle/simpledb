@@ -9,6 +9,10 @@ public class HashEquiJoin extends Operator {
 
     private static final long serialVersionUID = 1L;
 
+    private JoinPredicate p;
+    private DbIterator child1;
+    private DbIterator child2;
+
     /**
      * Constructor. Accepts to children to join and the predicate to join them
      * on

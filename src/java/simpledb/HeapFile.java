@@ -116,7 +116,6 @@ public class HeapFile implements DbFile {
             throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         return null;
-        // not necessary for lab1
     }
 
     // see DbFile.java for javadocs
@@ -124,7 +123,6 @@ public class HeapFile implements DbFile {
             TransactionAbortedException {
         // some code goes here
         return null;
-        // not necessary for lab1
     }
 
     // see DbFile.java for javadocs
