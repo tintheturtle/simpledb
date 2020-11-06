@@ -165,6 +165,10 @@ public class Catalog {
 
         return this.filenames.get(index);
     }
+
+    public List<DbFile> getFiles() {
+        return this.files;
+    }
     
     /** Delete all tables from the catalog */
     public void clear() {
