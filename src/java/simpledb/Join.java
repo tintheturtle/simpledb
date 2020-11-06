@@ -117,20 +117,18 @@ public class Join extends Operator {
 
                 if (this.p.filter(leftTuple, child2Tup)) {
 
-                    int leftTupleSize = leftTuple.getTupleDesc().numFields();
-                    int rightTupleSize = child2Tup.getTupleDesc().numFields();
-                    Tuple mergedTuple = new Tuple(this.getTupleDesc());
+                    Tuple child3Tup = new Tuple(this.getTupleDesc());
 
-                    for (int i = 0; i < leftTupleSize; i++)
+                    for (int i = 0; i < leftTuple.getTupleDesc().numFields(); i++)
                     {
-                        mergedTuple.setField(i, leftTuple.getField(i));
+                        child3Tup.setField(i, leftTuple.getField(i));
                     }
-                    for (int i = 0; i < rightTupleSize; i++)
+                    for (int i = 0; i < child2Tup.getTupleDesc().numFields(); i++)
                     {
-                        mergedTuple.setField(leftTupleSize + i, child2Tup.getField(i));
+                        child3Tup.setField(leftTuple.getTupleDesc().numFields() + i, child2Tup.getField(i));
                     }
 
-                    return mergedTuple;
+                    return child3Tup;
                 };
             }
             this.currentTuple = null;
@@ -141,8 +139,6 @@ public class Join extends Operator {
 
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-
         return new DbIterator[] { this.child1, this.child2 };
     }
 
