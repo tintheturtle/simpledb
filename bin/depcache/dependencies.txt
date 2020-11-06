@@ -105,10 +105,14 @@ simpledb.TupleDesc
 java.util.NoSuchElementException
 simpledb.TransactionAbortedException
 ||:simpledb.Join
+simpledb.Tuple
+simpledb.DbIterator
 simpledb.Operator
 simpledb.DbException
+simpledb.TupleDesc
 java.util.NoSuchElementException
 simpledb.Join
+simpledb.JoinPredicate
 simpledb.TransactionAbortedException
 ||:simpledb.StringAggregator
 java.lang.UnsupportedOperationException

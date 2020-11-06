@@ -25,42 +25,47 @@ public class HashEquiJoin extends Operator {
      *            Iterator for the right(inner) relation to join
      */
     public HashEquiJoin(JoinPredicate p, DbIterator child1, DbIterator child2) {
-        // some code goes here
+        this.p = p;
+        this.child1 = child1;
+        this.child2 = child2;
     }
 
     public JoinPredicate getJoinPredicate() {
         // some code goes here
-        return null;
+        return this.p;
     }
 
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return TupleDesc.merge(this.child1.getTupleDesc(), this.child2.getTupleDesc());
     }
     
     public String getJoinField1Name()
     {
-        // some code goes here
-	return null;
+	    return this.child1.getTupleDesc().getFieldName(this.p.getField1());
     }
 
     public String getJoinField2Name()
     {
-        // some code goes here
-        return null;
+        return this.child2.getTupleDesc().getFieldName(this.p.getField2());
     }
     
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        // some code goes here
+        this.child1.open();
+        this.child2.open();
+        super.open();
     }
 
     public void close() {
         // some code goes here
+        this.child1.close();
+        this.child2.close();
+        super.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
+        this.child1.rewind();
+        this.child2.rewind();
     }
 
     transient Iterator<Tuple> listIt = null;
@@ -85,18 +90,22 @@ public class HashEquiJoin extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
+
+
+
+
         return null;
     }
 
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-        return null;
+        return new DbIterator[] { this.child1, this.child2 };
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
-        // some code goes here
+        this.child1 = children[0];
+        this.child2 = children[1];
     }
     
 }

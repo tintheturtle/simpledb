@@ -13,6 +13,8 @@ public class Join extends Operator {
     private DbIterator child1;
     private DbIterator child2;
 
+    private Tuple currentTuple;
+
     /**
      * Constructor. Accepts to children to join and the predicate to join them
      * on
@@ -25,10 +27,10 @@ public class Join extends Operator {
      *            Iterator for the right(inner) relation to join
      */
     public Join(JoinPredicate p, DbIterator child1, DbIterator child2) {
-        // some code goes here
         this.p = p;
         this.child1 = child1;
         this.child2 = child2;
+        this.currentTuple = null;
     }
 
     public JoinPredicate getJoinPredicate() {
@@ -58,8 +60,7 @@ public class Join extends Operator {
      *      implementation logic.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return TupleDesc.merge(this.child1.getTupleDesc(), this.child2.getTupleDesc());
     }
 
     public void open() throws DbException, NoSuchElementException,
@@ -99,19 +100,56 @@ public class Join extends Operator {
      * @see JoinPredicate#filter
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        // some code goes here
+
+        while(this.child1.hasNext()) {
+
+            Tuple leftTuple;
+            if (this.currentTuple != null) {
+                leftTuple = this.currentTuple;
+            } else {
+                this.currentTuple = this.child1.next();
+                leftTuple = this.currentTuple;
+            }
+
+            while(this.child2.hasNext()) {
+
+                Tuple child2Tup = this.child2.next();
+
+                if (this.p.filter(leftTuple, child2Tup)) {
+
+                    int leftTupleSize = leftTuple.getTupleDesc().numFields();
+                    int rightTupleSize = child2Tup.getTupleDesc().numFields();
+                    Tuple mergedTuple = new Tuple(this.getTupleDesc());
+
+                    for (int i = 0; i < leftTupleSize; i++)
+                    {
+                        mergedTuple.setField(i, leftTuple.getField(i));
+                    }
+                    for (int i = 0; i < rightTupleSize; i++)
+                    {
+                        mergedTuple.setField(leftTupleSize + i, child2Tup.getField(i));
+                    }
+
+                    return mergedTuple;
+                };
+            }
+            this.currentTuple = null;
+            this.child2.rewind();
+        }
         return null;
     }
 
     @Override
     public DbIterator[] getChildren() {
         // some code goes here
-        return null;
+
+        return new DbIterator[] { this.child1, this.child2 };
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
-        // some code goes here
+        this.child1 = children[0];
+        this.child2 = children[1];
     }
 
 }
