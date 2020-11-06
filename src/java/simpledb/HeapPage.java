@@ -78,8 +78,6 @@ public class HeapPage implements Page {
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
     private int getHeaderSize() {        
-        
-        // some code goes here
         return (int) Math.ceil( (double) this.getNumTuples() / 8);
                  
     }
@@ -246,17 +244,18 @@ public class HeapPage implements Page {
     public void deleteTuple(Tuple t) throws DbException {
         // some code goes here
         // not necessary for lab1
-        RecordId tid = t.getRecordId();
-        HeapPageId heappageID = (HeapPageId) tid.getPageId();
-        int tupleno = tid.tupleno();
 
-        if (!heappageID.equals(this.pid) || !this.isSlotUsed(tupleno) ) {
-            throw new DbException("Tuple is not on the page.");
+        RecordId rid = t.getRecordId();
+        if(rid == null || !this.pid.equals(rid.getPageId())){
+            throw new DbException("Tuple not on this page.");
         }
 
-        this.tuples[tupleno] = null;
-        this.markSlotUsed(tupleno, false);
-
+        int tupSlot = rid.tupleno();
+        if(!isSlotUsed(tupSlot)){
+            throw new DbException("Tuple slot is already empty.");
+        }
+        markSlotUsed(tupSlot, false);
+        tuples[tupSlot] = null;
     }
 
     /**
@@ -269,23 +268,29 @@ public class HeapPage implements Page {
     public void insertTuple(Tuple t) throws DbException {
         // some code goes here
 
-        if (this.getNumEmptySlots() == 0 ) {
-            throw new DbException("Page is full.");
+        if(!td.equals(t.getTupleDesc())){
+            throw new DbException("TupleDesc is mismatch.");
         }
-
-        if (!td.equals(t.getTupleDesc())) {
-            throw new DbException("Invalid/Mismatched TupleDesc. ");
-        }
-
-        for (int i = 0; i < this.numSlots; i++) {
-            if (!this.isSlotUsed(i)) {
-                this.markSlotUsed(i, true);
-                t.setRecordId(new RecordId(this.pid, i));
-                this.tuples[i] = t;
+        int freeSlotNum = -1;
+        boolean freeSlot = false;
+        for(int i = 0; i < header.length; i++){
+            for(int j = 0; j < 8; j ++){
+                freeSlotNum = (i * 8) + j;
+                if(!isSlotUsed(freeSlotNum)){
+                    freeSlot = true;
+                    break;
+                }
+            }
+            if(freeSlot){
+                break;
             }
         }
-
-        throw new DbException("Could not be added to page.");
+        if(!freeSlot || freeSlotNum == -1){
+            throw new DbException("Page is full.");
+        }
+        t.setRecordId(new RecordId(this.pid, freeSlotNum));
+        tuples[freeSlotNum] = t;
+        markSlotUsed(freeSlotNum, true);
     }
 
     /**
@@ -355,7 +360,7 @@ public class HeapPage implements Page {
         // not necessary for lab1
         int headerNumber = i / 8;
 
-        byte mask =  (byte) (1 << (i % 7));
+        byte mask =  (byte) (1 << (i % 8));
 
         if (value != false) {
             header[headerNumber] |= mask;

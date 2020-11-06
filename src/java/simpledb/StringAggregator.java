@@ -1,11 +1,21 @@
 package simpledb;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 /**
  * Knows how to compute some aggregate over a set of StringFields.
  */
 public class StringAggregator implements Aggregator {
 
     private static final long serialVersionUID = 1L;
+
+    private int gbfield;
+    private Type gbfieldtype;
+    private int afield;
+    private Op what;
+
+    private HashMap<Field, Integer> map;
 
     /**
      * Aggregate constructor
@@ -16,8 +26,18 @@ public class StringAggregator implements Aggregator {
      * @throws IllegalArgumentException if what != COUNT
      */
 
-    public StringAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
+    public StringAggregator(int gbfield, Type gbfieldtype, int afield, Op what) throws IllegalArgumentException {
         // some code goes here
+
+        this.gbfield = gbfield;
+        this.gbfieldtype = gbfieldtype;
+        this.afield = afield;
+        this.what = what;
+
+        assert(this.what == Op.COUNT);
+
+        this.map = new HashMap<Field, Integer>();
+
     }
 
     /**
@@ -26,6 +46,21 @@ public class StringAggregator implements Aggregator {
      */
     public void mergeTupleIntoGroup(Tuple tup) {
         // some code goes here
+
+        Field field;
+
+        if (this.gbfield == Aggregator.NO_GROUPING) {
+            field = null;
+        } else {
+            field = tup.getField(this.gbfield);
+        }
+
+        if (this.map.containsKey(field)) {
+            int current = this.map.get(field) + 1;
+            this.map.put(field, current);
+        } else {
+            this.map.put(field, 1);
+        }
     }
 
     /**
@@ -37,8 +72,38 @@ public class StringAggregator implements Aggregator {
      *   aggregate specified in the constructor.
      */
     public DbIterator iterator() {
-        // some code goes here
-        throw new UnsupportedOperationException("please implement me for lab3");
+
+        ArrayList<Tuple> tuples = new ArrayList<Tuple>();
+
+        String[] names;
+        Type[] types;
+        if (this.gbfield == Aggregator.NO_GROUPING)
+        {
+            names = new String[] {"aggregateValue"};
+            types = new Type[] {Type.INT_TYPE};
+        }
+        else
+        {
+            names = new String[] {"groupValue", "aggregateValue"};
+            types = new Type[] {this.gbfieldtype, Type.INT_TYPE};
+        }
+        TupleDesc td =  new TupleDesc(types, names);
+
+        Tuple next;
+
+        for (Field field : this.map.keySet()) {
+            int value = this.map.get(field);
+
+            next = new Tuple(td);
+            if (this.gbfield == Aggregator.NO_GROUPING) {
+                next.setField(0, new IntField(value));
+            } else {
+                next.setField(0, field);
+                next.setField(1, new IntField(value));
+            }
+            tuples.add(next);
+        }
+        return new TupleIterator(td, tuples);
     }
 
 }

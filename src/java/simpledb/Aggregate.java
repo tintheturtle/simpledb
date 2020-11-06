@@ -23,12 +23,12 @@ public class Aggregate extends Operator {
 
     /**
      * Constructor.
-     * 
+     *
      * Implementation hint: depending on the type of afield, you will want to
      * construct an {@link IntegerAggregator} or {@link StringAggregator} to help
      * you with your implementation of readNext().
-     * 
-     * 
+     *
+     *
      * @param child
      *            The DbIterator that is feeding us tuples.
      * @param afield
@@ -45,6 +45,8 @@ public class Aggregate extends Operator {
 	    this.gfield = gfield;
 	    this.aop = aop;
 
+	    this.aggregatorIt = null;
+
 	    Type grouping;
 
 	    if (this.gfield == Aggregator.NO_GROUPING) {
@@ -56,12 +58,14 @@ public class Aggregate extends Operator {
 	    switch(this.child.getTupleDesc().getFieldType(this.afield)) {
             case INT_TYPE: {
                 this.aggregator = new IntegerAggregator(this.gfield, grouping, this.afield, this.aop);
+                break;
             }
             case STRING_TYPE: {
                 this.aggregator = new StringAggregator(this.gfield, grouping, this.afield, this.aop);
+                break;
             }
             default: {
-                return;
+                assert(false);
             }
         }
     }
@@ -72,11 +76,7 @@ public class Aggregate extends Operator {
      *         {@link simpledb.Aggregator#NO_GROUPING}
      * */
     public int groupField() {
-        if (this.gfield != -1) {
-            return this.gfield;
-        }
-
-	    return Aggregator.NO_GROUPING;
+        return this.gfield;
     }
 
     /**
@@ -115,20 +115,21 @@ public class Aggregate extends Operator {
     }
 
     public static String nameOfAggregatorOp(Aggregator.Op aop) {
-	return aop.toString();
+	    return aop.toString();
     }
 
     public void open() throws NoSuchElementException, DbException,
 	    TransactionAbortedException {
-	    this.child.open();
-	    super.open();
+        super.open();
+        this.child.open();
 
 	    while (this.child.hasNext()) {
 	        this.aggregator.mergeTupleIntoGroup(this.child.next());
         }
 
 	    this.aggregatorIt = this.aggregator.iterator();
-
+        this.aggregatorIt.open();
+        this.child.close();
     }
 
     /**
@@ -141,12 +142,13 @@ public class Aggregate extends Operator {
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
 
         if (this.aggregatorIt.hasNext()) {
-            return(this.aggregatorIt.next());
+            return this.aggregatorIt.next();
         }
 	    return null;
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
+        this.aggregatorIt.rewind();
         this.child.rewind();
     }
 
@@ -155,7 +157,7 @@ public class Aggregate extends Operator {
      * this will have one field - the aggregate column. If there is a group by
      * field, the first field will be the group by field, and the second will be
      * the aggregate value column.
-     * 
+     *
      * The name of an aggregate column should be informative. For example:
      * "aggName(aop) (child_td.getFieldName(afield))" where aop and afield are
      * given in the constructor, and child_td is the TupleDesc of the child
@@ -166,8 +168,9 @@ public class Aggregate extends Operator {
     }
 
     public void close() {
-	    this.child.close();
-	    super.close();
+        super.close();
+        this.child.close();
+	    this.aggregatorIt.close();
     }
 
     @Override
@@ -179,5 +182,5 @@ public class Aggregate extends Operator {
     public void setChildren(DbIterator[] children) {
 	    this.child = children[0];
     }
-    
+
 }
