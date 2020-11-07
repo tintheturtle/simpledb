@@ -64,26 +64,18 @@ public class IntegerAggregator implements Aggregator {
         }
 
         int currVal = aData.get(tupGBField);
+        System.out.println(currVal);
         int newVal = currVal;
         int currCount = count.get(tupGBField);
-        int tupVal = ((IntField)tup.getField(aFieldIndex)).getValue();
+        int tupVal = ((IntField) tup.getField(aFieldIndex)).getValue();
+        System.out.println(tupVal);
 
         switch(opper){
             case MAX:
-                if(tupVal < currVal){
-                    newVal = currVal;
-                }
-                else{
-                    newVal = tupVal;
-                }
+                newVal = Math.max(tupVal, currVal);
                 break;
             case MIN:
-                if(tupVal > currVal){
-                    newVal = currVal;
-                }
-                else{
-                    newVal = tupVal;
-                }
+                newVal = Math.min(tupVal, currVal);
                 break;
             case SUM:
             case AVG:
@@ -101,8 +93,8 @@ public class IntegerAggregator implements Aggregator {
 
     private int startingData(){
         switch(opper){
-            case MAX: return Integer.MAX_VALUE;
-            case MIN: return Integer.MIN_VALUE;
+            case MAX: return Integer.MIN_VALUE;
+            case MIN: return Integer.MAX_VALUE;
             case SUM: case AVG: case COUNT: return 0;
             default: return 0;
         }

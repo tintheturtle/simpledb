@@ -129,7 +129,6 @@ public class Aggregate extends Operator {
 
 	    this.aggregatorIt = this.aggregator.iterator();
         this.aggregatorIt.open();
-        this.child.close();
     }
 
     /**
@@ -142,7 +141,9 @@ public class Aggregate extends Operator {
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
 
         if (this.aggregatorIt.hasNext()) {
-            return this.aggregatorIt.next();
+
+            Tuple next = this.aggregatorIt.next();
+            return next;
         }
 	    return null;
     }

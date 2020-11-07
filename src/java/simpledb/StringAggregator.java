@@ -56,7 +56,9 @@ public class StringAggregator implements Aggregator {
         }
 
         if (this.map.containsKey(field)) {
-            int current = this.map.get(field) + 1;
+
+            int currentCount = this.map.get(field);
+            int current = currentCount + 1;
             this.map.put(field, current);
         } else {
             this.map.put(field, 1);
