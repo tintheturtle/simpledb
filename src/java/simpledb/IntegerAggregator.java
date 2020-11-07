@@ -64,11 +64,9 @@ public class IntegerAggregator implements Aggregator {
         }
 
         int currVal = aData.get(tupGBField);
-        System.out.println(currVal);
         int newVal = currVal;
         int currCount = count.get(tupGBField);
         int tupVal = ((IntField) tup.getField(aFieldIndex)).getValue();
-        System.out.println(tupVal);
 
         switch(opper){
             case MAX:
