@@ -124,18 +124,13 @@ public class Join extends Operator {
                 Tuple child2Tup = this.child2.next();
 
                 if (this.p.filter(leftTuple, child2Tup)) {
-
                     Tuple child3Tup = new Tuple(this.getTupleDesc());
-
-                    for (int i = 0; i < leftTuple.getTupleDesc().numFields(); i++)
-                    {
+                    for (int i = 0; i < leftTuple.getTupleDesc().numFields(); i++) {
                         child3Tup.setField(i, leftTuple.getField(i));
                     }
-                    for (int i = 0; i < child2Tup.getTupleDesc().numFields(); i++)
-                    {
+                    for (int i = 0; i < child2Tup.getTupleDesc().numFields(); i++) {
                         child3Tup.setField(leftTuple.getTupleDesc().numFields() + i, child2Tup.getField(i));
                     }
-
                     return child3Tup;
                 };
             }
@@ -148,13 +143,9 @@ public class Join extends Operator {
             Tuple leftTuple = this.currentTuple;
 
             while(this.child2.hasNext()) {
-
                 Tuple child2Tup = this.child2.next();
-
                 if (this.p.filter(leftTuple, child2Tup)) {
-
                     Tuple child3Tup = new Tuple(this.getTupleDesc());
-
                     for (int i = 0; i < leftTuple.getTupleDesc().numFields(); i++)
                     {
                         child3Tup.setField(i, leftTuple.getField(i));
@@ -163,7 +154,6 @@ public class Join extends Operator {
                     {
                         child3Tup.setField(leftTuple.getTupleDesc().numFields() + i, child2Tup.getField(i));
                     }
-
                     return child3Tup;
                 };
             }

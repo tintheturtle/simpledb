@@ -165,11 +165,14 @@ public class HashEquiJoin extends Operator {
 
             ArrayList<Tuple> arr = this.map.get(this.left.getField(this.p.getField1()));
 
-            if (arr == null) {
+            if (arr != null) {
+                arr.add(this.left);
+            } else {
                 arr = new ArrayList<Tuple>();
                 this.map.put(this.left.getField(this.p.getField1()), arr);
+                arr.add(this.left);
             }
-            arr.add(this.left);
+
         }
 
         return !this.map.isEmpty();
