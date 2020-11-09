@@ -65,7 +65,7 @@ public class Aggregate extends Operator {
                 break;
             }
             default: {
-                assert(false);
+                this.aggregator = null;
             }
         }
     }

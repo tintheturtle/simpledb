@@ -108,13 +108,15 @@ public class HashEquiJoin extends Operator {
      * @see JoinPredicate#filter
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        if (this.listIt != null && this.listIt.hasNext()) {
 
-            if (this.listIt.hasNext()) {
+        // Check if need to merge with tuple from child2
+        if (this.listIt != null) {
+            if (this.listIt.hasNext() == true) {
                 return this.mergeTuples();
             }
         }
 
+        // Get next tuple from child2
         while (this.child2.hasNext()) {
             this.right = this.child2.next();
 
@@ -128,6 +130,7 @@ public class HashEquiJoin extends Operator {
             }
         }
 
+        // See if there are any remaining tuples that need to be joined
         if (!this.child2.hasNext()) {
             this.child2.rewind();
             if (this.mapChild()) {
@@ -135,6 +138,7 @@ public class HashEquiJoin extends Operator {
             }
         }
 
+        // No more tuples need to be joined
         return null;
     }
 

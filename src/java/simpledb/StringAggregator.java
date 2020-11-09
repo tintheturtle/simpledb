@@ -79,17 +79,16 @@ public class StringAggregator implements Aggregator {
 
         String[] names;
         Type[] types;
-        if (this.gbfield == Aggregator.NO_GROUPING)
-        {
+        TupleDesc td;
+        if (this.gbfield == Aggregator.NO_GROUPING) {
             names = new String[] {"aggregateValue"};
             types = new Type[] {Type.INT_TYPE};
+            td =  new TupleDesc(types, names);
+        } else {
+            names = new String[]{"groupValue", "aggregateValue"};
+            types = new Type[]{this.gbfieldtype, Type.INT_TYPE};
+            td = new TupleDesc(types, names);
         }
-        else
-        {
-            names = new String[] {"groupValue", "aggregateValue"};
-            types = new Type[] {this.gbfieldtype, Type.INT_TYPE};
-        }
-        TupleDesc td =  new TupleDesc(types, names);
 
         Tuple next;
 

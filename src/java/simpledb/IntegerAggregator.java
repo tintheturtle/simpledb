@@ -91,10 +91,16 @@ public class IntegerAggregator implements Aggregator {
 
     private int startingData(){
         switch(opper){
-            case MAX: return Integer.MIN_VALUE;
-            case MIN: return Integer.MAX_VALUE;
-            case SUM: case AVG: case COUNT: return 0;
-            default: return 0;
+            case MAX:
+                return Integer.MIN_VALUE;
+            case MIN:
+                return Integer.MAX_VALUE;
+            case SUM:
+            case AVG:
+            case COUNT:
+                return 0;
+            default:
+                return 0;
         }
     }
 
