@@ -995,12 +995,17 @@ simpledb.IntField
 simpledb.TransactionAbortedException
 ||:simpledb.HashEquiJoin
 simpledb.DbIterator
+simpledb.DbException
+java.util.HashMap
+simpledb.JoinPredicate
+simpledb.Tuple
+simpledb.Field
+simpledb.Predicate$Op
+simpledb.Predicate
 simpledb.Operator
 simpledb.HashEquiJoin
-simpledb.DbException
 simpledb.TupleDesc
 java.util.NoSuchElementException
-simpledb.JoinPredicate
 simpledb.TransactionAbortedException
 ||:simpledb.JoinOptimizer
 simpledb.DbIterator
@@ -2194,7 +2199,6 @@ java.lang.Math
 java.lang.Boolean
 java.lang.String
 simpledb.TupleDesc
-java.io.PrintStream
 java.lang.invoke.MethodHandles$Lookup
 simpledb.Utility
 simpledb.DbFile

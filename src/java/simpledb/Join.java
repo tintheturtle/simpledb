@@ -15,6 +15,9 @@ public class Join extends Operator {
 
     private Tuple currentTuple;
 
+    private Tuple left;
+    private Tuple right;
+
     /**
      * Constructor. Accepts to children to join and the predicate to join them
      * on
@@ -31,6 +34,10 @@ public class Join extends Operator {
         this.child1 = child1;
         this.child2 = child2;
         this.currentTuple = null;
+
+        this.right = null;
+        this.left = null;
+
     }
 
     public JoinPredicate getJoinPredicate() {
@@ -67,6 +74,7 @@ public class Join extends Operator {
             TransactionAbortedException {
         this.child1.open();
         this.child2.open();
+
         super.open();
     }
 
@@ -134,6 +142,35 @@ public class Join extends Operator {
             this.currentTuple = null;
             this.child2.rewind();
         }
+
+        if (this.child2.hasNext() && this.currentTuple != null) {
+
+            Tuple leftTuple = this.currentTuple;
+
+            while(this.child2.hasNext()) {
+
+                Tuple child2Tup = this.child2.next();
+
+                if (this.p.filter(leftTuple, child2Tup)) {
+
+                    Tuple child3Tup = new Tuple(this.getTupleDesc());
+
+                    for (int i = 0; i < leftTuple.getTupleDesc().numFields(); i++)
+                    {
+                        child3Tup.setField(i, leftTuple.getField(i));
+                    }
+                    for (int i = 0; i < child2Tup.getTupleDesc().numFields(); i++)
+                    {
+                        child3Tup.setField(leftTuple.getTupleDesc().numFields() + i, child2Tup.getField(i));
+                    }
+
+                    return child3Tup;
+                };
+            }
+
+        }
+
+
         return null;
     }
 
