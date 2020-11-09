@@ -18,8 +18,6 @@ public class HashEquiJoin extends Operator {
 
     private TupleDesc td;
 
-    private HashMap<Object, ArrayList<Tuple>> map = new HashMap<Object, ArrayList<Tuple>>();
-
 
     /**
      * Constructor. Accepts to children to join and the predicate to join them
@@ -66,6 +64,9 @@ public class HashEquiJoin extends Operator {
             TransactionAbortedException {
         this.child1.open();
         this.child2.open();
+
+        this.map.clear();
+        this.mapChild();
         super.open();
     }
 
@@ -74,6 +75,11 @@ public class HashEquiJoin extends Operator {
         this.child1.close();
         this.child2.close();
         super.close();
+
+        this.listIt = null;
+        this.map.clear();
+        this.left = null;
+        this.right = null;
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
@@ -102,10 +108,73 @@ public class HashEquiJoin extends Operator {
      * @see JoinPredicate#filter
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        // some code goes here
+        if (this.listIt != null && this.listIt.hasNext()) {
+
+            if (this.listIt.hasNext()) {
+                return this.mergeTuples();
+            }
+        }
+
+        while (this.child2.hasNext()) {
+            this.right = this.child2.next();
+
+            ArrayList<Tuple> lst = this.map.get(this.right.getField(this.p.getField2()));
+            if (lst != null) {
+                this.listIt = lst.iterator();
+
+                return this.mergeTuples();
+            } else {
+                continue;
+            }
+        }
+
+        if (!this.child2.hasNext()) {
+            this.child2.rewind();
+            if (this.mapChild()) {
+                return this.fetchNext();
+            }
+        }
 
         return null;
     }
+
+    private Tuple mergeTuples() {
+
+        this.left = listIt.next();
+
+        int len1 = this.left.getTupleDesc().numFields();
+        int len2 = this.right.getTupleDesc().numFields();
+
+        Tuple tup = new Tuple(this.getTupleDesc());
+        for (int i = 0; i < len1; i++)
+            tup.setField(i, this.left.getField(i));
+        for (int j = 0; j < len2; j++)
+            tup.setField(len1 + j, this.right.getField(j));
+        return tup;
+
+    }
+
+    private HashMap<Object, ArrayList<Tuple>> map = new HashMap<Object, ArrayList<Tuple>>();
+
+    private boolean mapChild() throws DbException, TransactionAbortedException {
+
+        this.map.clear();
+
+        while (this.child1.hasNext()) {
+            this.left = this.child1.next();
+
+            ArrayList<Tuple> arr = this.map.get(this.left.getField(this.p.getField1()));
+
+            if (arr == null) {
+                arr = new ArrayList<Tuple>();
+                this.map.put(this.left.getField(this.p.getField1()), arr);
+            }
+            arr.add(this.left);
+        }
+
+        return !this.map.isEmpty();
+    }
+
 
     @Override
     public DbIterator[] getChildren() {
